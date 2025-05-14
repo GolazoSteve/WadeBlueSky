@@ -16,7 +16,7 @@ def find_today_game(schedule):
     today = datetime.datetime.now(tz=utc).date()
     for game in schedule:
         try:
-            game_time = parser.isoparse(game["start_time_utc"]).astimezone(utc)
+            game_time = parser.isoparse(game["start_time_utc"]).replace(tzinfo=utc)
             game_date = game_time.date()
             if game_date == today:
                 return game_time, game.get("game_id")
