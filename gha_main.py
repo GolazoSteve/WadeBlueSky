@@ -1,5 +1,3 @@
-# gha_main.py
-
 import os
 import json
 import datetime
@@ -19,7 +17,7 @@ def find_today_game(schedule):
     today = datetime.datetime.now(tz=utc).date()
     for game in schedule:
         try:
-            game_time = parser.isoparse(game["start_time_utc"])  # This must match your schedule.json format
+            game_time = parser.isoparse(game["start_time_utc"])  # Format: ISO 8601 in UTC
             game_date = game_time.date()
             if game_date == today:
                 return game_time, game.get("game_id")
@@ -40,6 +38,11 @@ def main():
     if not game_time:
         print("🛑 No Giants game scheduled today. Exiting.")
         return
+
+    now = datetime.datetime.now(tz=utc)
+    print(f"📅 Found game time: {game_time} (UTC)")
+    print(f"🕒 Current time:     {now} (UTC)")
+    print(f"✅ Valid window:     {game_time - datetime.timedelta(hours=1)} → {game_time + datetime.timedelta(hours=5)} (UTC)")
 
     if not in_valid_window(game_time):
         print("🛑 Not in a valid game window. Exiting.")
