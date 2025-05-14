@@ -3,7 +3,8 @@ import os
 from datetime import datetime, timedelta
 from dateutil import parser
 from pytz import utc
-from generate_wade_draft import run_wade_bot
+from wade_live import run_wade_bot
+
 
 def get_most_recent_game():
     import requests
