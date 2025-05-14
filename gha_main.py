@@ -28,9 +28,9 @@ def should_run_now(schedule_path="schedule.json"):
         print(f"⚠️ Failed to load schedule: {e}")
         return True  # fail-safe
 
-    for game in schedule:
-        try:
-            start = datetime.fromisoformat(game["gameDate"].replace("Z", "+00:00"))
+   for game in schedule:
+    try:
+        game_time = parser.isoparse(game["start_time_utc"])
             end = start + timedelta(hours=4)
 
             if start.date() == now.date() and start <= now <= end:
