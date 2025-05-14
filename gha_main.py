@@ -1,55 +1,54 @@
+# gha_main.py
 import os
-import json
-import datetime
+from datetime import datetime, timedelta
 from dateutil import parser
 from pytz import utc
+from generate_wade_draft import run_wade_bot
 
-def load_schedule():
-    try:
-        with open("schedule.json", "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print("⚠️ schedule.json not found. Running anyway.")
-        return []
+def get_most_recent_game():
+    import requests
 
-def find_today_game(schedule):
-    today = datetime.datetime.now(tz=utc).date()
-    for game in schedule:
-        try:
-            game_time = parser.isoparse(game["start_time_utc"]).replace(tzinfo=utc)
-            game_date = game_time.date()
-            if game_date == today:
-                return game_time, game.get("game_id")
-        except Exception as e:
-            print(f"⚠️ Error parsing game time: {e}")
-    return None, None
+    team_id = 137  # Giants
+    url = f"https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId={team_id}&date={datetime.utcnow().date()}"
 
-def in_valid_window(game_time):
-    now = datetime.datetime.now(tz=utc)
-    window_start = game_time - datetime.timedelta(hours=1)
-    window_end = game_time + datetime.timedelta(hours=5)
-    return window_start <= now <= window_end
+    response = requests.get(url)
+    data = response.json()
+    dates = data.get("dates", [])
+    if not dates:
+        return None
+    games = dates[0].get("games", [])
+    if not games:
+        return None
+
+    game = games[0]
+    game_time = parser.isoparse(game["gameDate"]).replace(tzinfo=utc)  # ✅ correct timezone handling
+    return {
+        "gamePk": game["gamePk"],
+        "start_time_utc": game_time,
+    }
+
+def in_valid_game_window(game_time):
+    now = datetime.utcnow().replace(tzinfo=utc)
+    return game_time - timedelta(hours=1) <= now <= game_time + timedelta(hours=5)
 
 def main():
-    schedule = load_schedule()
-    game_time, game_id = find_today_game(schedule)
-
-    if not game_time:
-        print("🛑 No Giants game scheduled today. Exiting.")
+    game = get_most_recent_game()
+    if not game:
+        print("🛑 No game found for today. Exiting.")
         return
 
-    now = datetime.datetime.now(tz=utc)
+    game_time = game["start_time_utc"]
     print(f"📅 Found game time: {game_time} (UTC)")
+    now = datetime.utcnow().replace(tzinfo=utc)
     print(f"🕒 Current time:     {now} (UTC)")
-    print(f"✅ Valid window:     {game_time - datetime.timedelta(hours=1)} → {game_time + datetime.timedelta(hours=5)} (UTC)")
+    print(f"✅ Valid window:     {game_time - timedelta(hours=1)} → {game_time + timedelta(hours=5)} (UTC)")
 
-    if not in_valid_window(game_time):
+    if not in_valid_game_window(game_time):
         print("🛑 Not in a valid game window. Exiting.")
         return
 
-    print(f"🎯 Game ID: {game_id} (start: {game_time.isoformat()})")
-    print("✅ WADE check complete.")
-    # Add bot logic here
+    # Run WADE
+    run_wade_bot(game["gamePk"])
 
 if __name__ == "__main__":
     main()
