@@ -1,9 +1,8 @@
 import os
 import json
 import datetime
-import requests
 from dateutil import parser
-from pytz import timezone, utc
+from pytz import utc
 
 def load_schedule():
     try:
@@ -17,7 +16,7 @@ def find_today_game(schedule):
     today = datetime.datetime.now(tz=utc).date()
     for game in schedule:
         try:
-            game_time = parser.isoparse(game["start_time_utc"])  # Format: ISO 8601 in UTC
+            game_time = parser.isoparse(game["start_time_utc"]).astimezone(utc)
             game_date = game_time.date()
             if game_date == today:
                 return game_time, game.get("game_id")
@@ -50,7 +49,7 @@ def main():
 
     print(f"🎯 Game ID: {game_id} (start: {game_time.isoformat()})")
     print("✅ WADE check complete.")
-    # Your main bot logic would run here...
+    # Add bot logic here
 
 if __name__ == "__main__":
     main()
