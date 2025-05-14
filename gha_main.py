@@ -1,56 +1,53 @@
+# gha_main.py
+
 import os
-import sys
 import json
-from datetime import datetime, timedelta
-from atproto import Client
-from openai import OpenAI
+import datetime
 import requests
+from dateutil import parser
+from pytz import timezone, utc
 
-# ---------------------------
-# Game Window Check Function
-# ---------------------------
-
-def should_run_now(schedule_path="schedule.json"):
-    """
-    Check if WADE should be running now, based on today's Giants schedule.
-    Only runs from first pitch to 4 hours after.
-    """
-    now = datetime.utcnow()
-
-    if not os.path.exists(schedule_path):
+def load_schedule():
+    try:
+        with open("schedule.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
         print("⚠️ schedule.json not found. Running anyway.")
-        return True  # fail-safe to prevent total shutdown
+        return []
 
-    try:
-        with open(schedule_path, "r", encoding="utf-8") as f:
-            schedule = json.load(f)
-    except Exception as e:
-        print(f"⚠️ Failed to load schedule: {e}")
-        return True  # fail-safe
-
-   for game in schedule:
-    try:
-        game_time = parser.isoparse(game["start_time_utc"])
-            end = start + timedelta(hours=4)
-
-            if start.date() == now.date() and start <= now <= end:
-                print(f"✅ Game in progress ({start.isoformat()}–{end.isoformat()}). Proceeding.")
-                return True
+def find_today_game(schedule):
+    today = datetime.datetime.now(tz=utc).date()
+    for game in schedule:
+        try:
+            game_time = parser.isoparse(game["start_time_utc"])  # This must match your schedule.json format
+            game_date = game_time.date()
+            if game_date == today:
+                return game_time, game.get("game_id")
         except Exception as e:
             print(f"⚠️ Error parsing game time: {e}")
-            continue
+    return None, None
 
-    print("🛑 Not in a valid game window. Exiting.")
-    return False
+def in_valid_window(game_time):
+    now = datetime.datetime.now(tz=utc)
+    window_start = game_time - datetime.timedelta(hours=1)
+    window_end = game_time + datetime.timedelta(hours=5)
+    return window_start <= now <= window_end
 
-# ---------------------------
-# Main WADE Posting Script
-# ---------------------------
+def main():
+    schedule = load_schedule()
+    game_time, game_id = find_today_game(schedule)
 
-if not should_run_now():
-    sys.exit()
+    if not game_time:
+        print("🛑 No Giants game scheduled today. Exiting.")
+        return
 
-# Simulated logic — replace with actual WADE logic below
+    if not in_valid_window(game_time):
+        print("🛑 Not in a valid game window. Exiting.")
+        return
 
-print("🎯 Game ID: 777916 (start: 2025-05-14T19:45:00Z)")
-print("✅ WADE check complete.")
+    print(f"🎯 Game ID: {game_id} (start: {game_time.isoformat()})")
+    print("✅ WADE check complete.")
+    # Your main bot logic would run here...
+
+if __name__ == "__main__":
+    main()
