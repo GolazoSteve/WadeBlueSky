@@ -1,7 +1,14 @@
-from datetime import datetime, timedelta
-import json
-import sys
 import os
+import sys
+import json
+from datetime import datetime, timedelta
+from atproto import Client
+from openai import OpenAI
+import requests
+
+# ---------------------------
+# Game Window Check Function
+# ---------------------------
 
 def should_run_now(schedule_path="schedule.json"):
     """
@@ -36,6 +43,14 @@ def should_run_now(schedule_path="schedule.json"):
     print("🛑 Not in a valid game window. Exiting.")
     return False
 
-# Run check early in the script
+# ---------------------------
+# Main WADE Posting Script
+# ---------------------------
+
 if not should_run_now():
     sys.exit()
+
+# Simulated logic — replace with actual WADE logic below
+
+print("🎯 Game ID: 777916 (start: 2025-05-14T19:45:00Z)")
+print("✅ WADE check complete.")
