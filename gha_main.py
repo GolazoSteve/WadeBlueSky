@@ -66,23 +66,16 @@ def is_giants_pa(play):
 
 def should_post(play):
     event = play.get("result", {}).get("event", "")
-    rbi = play.get("result", {}).get("rbi", 0)
     batter = play.get("matchup", {}).get("batter", {}).get("fullName", "")
 
-    if event == "Home Run" and is_giants_pa(play):
-        return True, "Giants Home Run"
-    if is_giants_pa(play) and rbi > 0:
-        return True, "Giants RBI scoring play"
-    if batter == "Jung Hoo Lee" and event in {"Single", "Double", "Triple", "Home Run", "Walk", "Hit By Pitch"}:
-        return True, f"Priority: Jung Hoo Lee {event}"
-    if batter == "Matt Chapman" and event in {"Double", "Triple", "Home Run"}:
-        return True, f"Priority: Matt Chapman {event}"
-    if batter == "Tyler Fitzgerald" and event in {"Single", "Double", "Triple", "Home Run"}:
-        return True, f"Priority: Tyler Fitzgerald {event}"
-    if batter == "Willy Adames" and event in {"Double", "Triple", "Home Run"}:
-        return True, f"Priority: Willy Adames {event}"
+    if not event or event.lower() == "pending":
+        return False, "No event yet"
 
-    return False, "No trigger"
+    if is_giants_pa(play) and event in {"Single", "Double", "Triple", "Home Run", "Walk", "Hit By Pitch", "Field Error"}:
+        return True, f"Giants reach base: {event}"
+
+    return False, "No posting condition met"
+
 
 # === POST GENERATION ===
 def generate_post(description):
