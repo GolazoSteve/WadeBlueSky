@@ -16,9 +16,9 @@ def fetch_plays(game_pk):
 
 def filter_and_generate_post(play):
     # Placeholder filtering logic – update this based on your project criteria
-    if "San Francisco" in play.get("result", {}).get("description", ""):
-        desc = play["result"]["description"]
-        return f"🟠 WADE SYSTEM DETECTED: {desc}"
+    description = play.get("result", {}).get("description", "")
+    if "San Francisco" in description:
+        return f"🟠 WADE SYSTEM DETECTED: {description}"
     return None
 
 def run_wade_bot(game_pk):
@@ -31,7 +31,11 @@ def run_wade_bot(game_pk):
         if post:
             print(f"📤 POST: {post}")
         else:
-            print(f"🤖 Ignored play: {play['result']['description']}")
+            description = play.get("result", {}).get("description")
+            if description:
+                print(f"🤖 Ignored play: {description}")
+            else:
+                print("🤖 Ignored play with no description")
 
 if __name__ == "__main__":
     # For quick testing
